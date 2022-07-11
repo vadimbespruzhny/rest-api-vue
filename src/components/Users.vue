@@ -1,31 +1,96 @@
 <template>
 	<div class="app">
-		<div class="users-list">
-			<UserItem v-for="user in users" :user="user" :key="user.id"/>
+		<div class="main">
+			<div v-if="!isLoading" class="actions">
+				<div class="v-model-select">
+					<select v-model="selectedUser">
+						<option disabled value="">Выберите пользователя</option>
+						<option v-for="user in users" :value="user.name" :key="user.id">
+							{{ user.name }}
+						</option>
+					</select>
+
+					<select v-show="selectedUser" v-model="selectedParameter">
+						<option disabled value="">Выберите параметр</option>
+						<option value="">Показать все параметры</option>
+						<option
+							v-for="param in loadedParams"
+							:value="param.parameter_name"
+							:key="param.id"
+						>
+							{{ param.parameter_name }}
+						</option>
+					</select>
+				</div>
+				<div class="param-form" v-show="selectedUser">
+					<form>
+						<input v-model="params.parameter_name" placeholder="Название параметра" />
+					</form>
+					<form>
+						<input v-model="params.parameter_type" placeholder="Тип параметра" />
+					</form>
+					<form>
+						<input v-model="params.parameter_value" placeholder="Значение параметра" />
+					</form>
+					<button @click="postParams">Добавить параметры</button>
+				</div>
+			</div>
+			<div v-else>Идет загрузка...</div>
+			<UserItem
+				:user="selectedUser"
+				:selectedParameter="selectedParameter"
+				@loadedParams="selectedParams"
+			/>
 		</div>
-		<div style="background-color: lightblue; width: 500px">sdlkjflks</div>
 	</div>
 </template>
 
 <script>
-import axios from "axios";
+import { axiosInstance } from "./api";
 import UserItem from "./UserItem.vue";
+
 export default {
 	components: { UserItem },
 	name: "usersParams",
 	data() {
 		return {
 			users: [],
+			selectedUser: "",
+			selectedParameter: "",
+			params: {
+				parameter_name: "",
+				parameter_type: "",
+				parameter_value: "",
+			},
+			loadedParams: [],
+			isLoading: false,
+			isError: false,
 		};
 	},
 	methods: {
 		async fetchUsers() {
 			try {
-				const response = await axios.get("http://127.0.0.1:8000/api/users/");
-				this.users = response.data.users;
+				this.isLoading = true;
+				const { data } = await axiosInstance.get("users/");
+				this.users = data.users;
 			} catch (error) {
-				console.log(error);
+				this.isError = true;
+			} finally {
+				this.isLoading = false;
 			}
+		},
+		async postParams() {
+			try {
+				const queryString = `parameters/${this.selectedUser}/`;
+				const {data} = await axiosInstance.post(queryString, this.params);
+				console.log(data);
+				console.log(queryString);
+			} catch (error) {
+				this.isError = true;
+			} 
+		},
+		selectedParams(data) {
+			this.loadedParams = data;
 		},
 	},
 	mounted() {
@@ -37,16 +102,71 @@ export default {
 <style scoped>
 .app {
 	padding: 15px;
+	margin-top: 50px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	height: 250px;
-	background-color: bisque;
-}
-.users-list {
-	background-color: aqua;
-	height: 250px;
+	height: 350px;
 	width: 800px;
+	background-color: rgb(135, 255, 177);
+	border-radius: 15px;
+}
+.main {
+	width: 700px;
+	display: flex;
+	justify-content: space-between;
+}
+.actions {
+	display: flex;
+	flex-direction: column;
+	width: 350px;
+}
+
+select {
+	width: 350px;
+	outline: none;
+	border: 2px solid rgb(255, 255, 255);
+	border-radius: 15px;
+	background-color: white;
+	padding: 5px;
+	box-sizing: border-box;
+	margin-top: 10px;
+	font-size: 16px;
+	font-family: "Courier New", Courier, monospace;
+}
+
+input {
+	height: 40px;
+	width: 350px;
+	border: 2px solid rgb(255, 255, 255);
+	border-radius: 15px;
+	outline: none;
+	background-color: white;
+	padding: 5px;
+	box-sizing: border-box;
+	margin-top: 10px;
+	font-size: 16px;
+	font-family: "Courier New", Courier, monospace;
+}
+input:focus {
+	outline: none;
+}
+button {
+	height: 40px;
+	width: 350px;
+	border: none;
+	border-radius: 15px;
+	outline: none;
+	background-color: rgb(47, 227, 110);
+	padding: 5px;
+	box-sizing: border-box;
+	margin-top: 10px;
+	font-size: 16px;
+	font-family: "Courier New", Courier, monospace;
+}
+
+button:hover {
+	background-color: rgb(3, 255, 91);
 }
 </style>
