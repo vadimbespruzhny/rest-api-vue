@@ -81,13 +81,14 @@ export default {
 		},
 		async postParams() {
 			try {
+				this.isLoading = true;
 				const queryString = `parameters/${this.selectedUser}/`;
-				const {data} = await axiosInstance.post(queryString, this.params);
-				console.log(data);
-				console.log(queryString);
+				await axiosInstance.post(queryString, this.params);
 			} catch (error) {
 				this.isError = true;
-			} 
+			} finally {
+				this.isLoading = false;
+			}
 		},
 		selectedParams(data) {
 			this.loadedParams = data;
