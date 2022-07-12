@@ -16,7 +16,6 @@
 				<div class="params">
 					{{ parameter.parameter_value }}
 					{{ parameter.parameter_type }}
-
 				</div>
 			</div>
 		</div>
